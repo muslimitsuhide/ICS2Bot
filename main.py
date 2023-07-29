@@ -4,7 +4,7 @@ from telebot import types
 bot = telebot.TeleBot('token')
 
 
-# Константы для идентификации состояний
+# константы для идентификации состояний
 START_STATE =   1
 HELP_STATE =    2
 EVENTS_STATE =  3
@@ -33,7 +33,7 @@ def on_click(message, **kwargs):
         bot.send_message(message.chat.id, '1')
         bot.register_next_step_handler(message, on_click, state=HELP_STATE)
     elif message.text == 'Список мероприятий':
-        bot.send_message(message.chat.id, '2')
+        show_events(message.chat.id)
         bot.register_next_step_handler(message, on_click, state=EVENTS_STATE)
     elif message.text == 'Техническая поддержка':
         bot.send_message(message.chat.id, '3')
@@ -42,5 +42,34 @@ def on_click(message, **kwargs):
         bot.send_message(message.chat.id, '4')
         bot.register_next_step_handler(message, on_click, state=DONATE_STATE)
 
+
+def show_events(chat_id):
+    markup = types.InlineKeyboardMarkup()
+    # данные будут браться из бд
+    markup.add(types.InlineKeyboardButton('Мероприятие 1', callback_data='1'))
+    markup.add(types.InlineKeyboardButton('Мероприятие 2', callback_data='2'))
+    markup.add(types.InlineKeyboardButton('Мероприятие 3', callback_data='3'))
+    markup.add(types.InlineKeyboardButton('Выход', callback_data='exit'))
+    bot.send_message(chat_id, 'Выберите мероприятие:', reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_handler(call):
+    # нужно продумать момент с тем, чтобы один пользователь только один раз мог записываться на мероприятие
+    if call.data.isdigit(): 
+        event_number = call.data
+        bot.answer_callback_query(call.id, f'Вы записались на мероприятие: {event_number}', show_alert=True)
+        # получаем ID чата пользователя, чтобы отправить сообщение
+        chat_id = call.message.chat.id
+
+        # отправляем сообщение с информацией о мероприятии
+        bot.send_message(chat_id, f'Вы записались на мероприятие: {event_number}')
+
+        # удаляем сообщение
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.delete_message(call.message.chat.id, call.message.message_id - 1)
+    else:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.delete_message(call.message.chat.id, call.message.message_id - 1)
 
 bot.polling(none_stop=True)
