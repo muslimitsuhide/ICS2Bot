@@ -1,8 +1,11 @@
 import telebot
 from telebot import types
+import sqlite3
 
 bot = telebot.TeleBot('token')
 
+name = None
+surname = None
 
 # константы для идентификации состояний
 START_STATE =   1
@@ -13,6 +16,43 @@ DONATE_STATE =  5
 
 @bot.message_handler(commands=['start'])
 def main(message):
+    conn = sqlite3.connect('users.sql')
+    cur = conn.cursor()
+
+    cur.execute('CREATE TABLE IF NOT EXISTS users (id int auto_increment primary key, name varchar(50), surname varchar(50), group_user varchar(20))')
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}\nДля начала нужно зарегистрироваться\nВведите свое настоящее имя:')
+    bot.register_next_step_handler(message, user_name)
+
+
+def user_name(message): 
+    global name
+    name = message.text.strip()
+    bot.send_message(message.chat.id, f'Введите свою настоящую фамилию:')
+    bot.register_next_step_handler(message, user_surname)
+
+
+def user_surname(message): 
+    global surname
+    surname = message.text.strip()
+    bot.send_message(message.chat.id, f'Введите свою группу:')
+    bot.register_next_step_handler(message, user_group)
+
+
+def user_group(message): 
+    group_user = message.text.strip()
+
+    conn = sqlite3.connect('users.sql')
+    cur = conn.cursor()
+
+    cur.execute(f"INSERT INTO users (name, surname, group_user) VALUES ('%s', '%s', '%s')" % (name, surname, group_user))
+    conn.commit()
+    cur.close()
+    conn.close()
+
     markup = types.ReplyKeyboardMarkup()
     btn1 = types.KeyboardButton('Помощь по боту')
     markup.row(btn1)
@@ -22,9 +62,9 @@ def main(message):
     markup.row(btn3)
     btn4 = types.KeyboardButton('Донаты')
     markup.row(btn4)
-    bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}\n', reply_markup=markup)
     # состояние пользователя устанавливаем в START_STATE
     bot.register_next_step_handler(message, on_click, state=START_STATE)
+    bot.send_message(message.chat.id, 'Пользователь зарегестрирован!', reply_markup=markup)
 
 
 def on_click(message, **kwargs):
