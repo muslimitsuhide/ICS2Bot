@@ -142,7 +142,8 @@ def on_click(message, **kwargs):
     elif message.text == 'Донаты':
         bot.send_message(message.chat.id, '4')
         bot.register_next_step_handler(message, on_click, state=DONATE_STATE)
-
+    else:
+        bot.send_message(message.chat.id, 'Пожалуйста, выберите действие из предложенных кнопок.')
 
 def show_events(chat_id):
     markup = types.InlineKeyboardMarkup()
