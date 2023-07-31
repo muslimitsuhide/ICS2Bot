@@ -6,6 +6,10 @@ bot = telebot.TeleBot('token')
 
 name = None
 surname = None
+group_user = None
+
+event_name = None
+event_date = None
 
 # константы для идентификации состояний
 START_STATE =   1
@@ -23,9 +27,65 @@ def main(message):
     conn.commit()
     cur.close()
     conn.close()
+
+    markup = types.ReplyKeyboardMarkup()
+    btn1 = types.KeyboardButton('Регистрация')
+    markup.row(btn1)
+    btn2 = types.KeyboardButton('Выход')
+    markup.row(btn2)
+    bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}\nЧтобы начать пользоваться ботом, нужно зарегистрироваться!', reply_markup=markup)
+
+    bot.register_next_step_handler(message, handle_registration)
+
+
+# ADMIN функция для добавления нового ивента 
+@bot.message_handler(commands=['add_event'])
+def add_event(message):
+    # проверяем, является ли пользователь админом
+    if message.from_user.id == admin_id:
+        conn = sqlite3.connect('events.sql')
+        cur = conn.cursor()
+
+        cur.execute('CREATE TABLE IF NOT EXISTS events (event_id int auto_increment primary key, event_name varchar(50), event_date varchar(20))')
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        bot.send_message(message.chat.id, 'Введите название мероприятия:')
+        bot.register_next_step_handler(message, event_name)
+    else:
+        bot.send_message(message.chat.id, 'Вы не обладаете правами администратора')
+
+
+def event_name(message):
+    global event_name
+    event_name = message.text.strip()
+    bot.send_message(message.chat.id, f'Введите дату мероприятия:')
+    bot.register_next_step_handler(message, event_date)
+
+
+def event_date(message):
+    global event_date
+    event_name = message.text.strip()
     
-    bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}\nДля начала нужно зарегистрироваться\nВведите свое настоящее имя:')
-    bot.register_next_step_handler(message, user_name)
+    conn = sqlite3.connect('events.sql')
+    cur = conn.cursor()
+
+    cur.execute(f"INSERT INTO events (event_name, event_date) VALUES ('%s', '%s')" % (event_name, event_date))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    bot.send_message(message.chat.id, 'Мероприятие добавлено!')
+
+def handle_registration(message):
+    if message.text == 'Регистрация':
+        bot.send_message(message.chat.id, 'Введите свое настоящее имя:')
+        bot.register_next_step_handler(message, user_name)
+    elif message.text == 'Выход':
+        bot.send_message(message.chat.id, 'Вы отменили регистрацию.', reply_markup=types.ReplyKeyboardRemove())
+    else:
+        bot.send_message(message.chat.id, 'Пожалуйста, выберите действие из предложенных кнопок.')
 
 
 def user_name(message): 
@@ -43,6 +103,7 @@ def user_surname(message):
 
 
 def user_group(message): 
+    global group_user
     group_user = message.text.strip()
 
     conn = sqlite3.connect('users.sql')
