@@ -106,26 +106,41 @@ def user_group(message):
     global group_user
     group_user = message.text.strip()
 
-    conn = sqlite3.connect('users.sql')
-    cur = conn.cursor()
+    bot.send_message(message.chat.id, f'Данные введены корректно?\nИмя: {name}\nФамилия: {surname}\nГруппа: {group_user}')
+    new_markup = types.ReplyKeyboardMarkup()
+    btn1 = types.KeyboardButton('✅')
+    new_markup.row(btn1)
+    btn2 = types.KeyboardButton('❌')
+    new_markup.row(btn2)
+    bot.register_next_step_handler(message, varif)
+    bot.send_message(message.chat.id, 'Нажмите кнопку:', reply_markup=new_markup)
 
-    cur.execute(f"INSERT INTO users (name, surname, group_user) VALUES ('%s', '%s', '%s')" % (name, surname, group_user))
-    conn.commit()
-    cur.close()
-    conn.close()
 
-    markup = types.ReplyKeyboardMarkup()
-    btn1 = types.KeyboardButton('Помощь по боту')
-    markup.row(btn1)
-    btn2 = types.KeyboardButton('Список мероприятий')
-    markup.row(btn2)
-    btn3 = types.KeyboardButton('Техническая поддержка')
-    markup.row(btn3)
-    btn4 = types.KeyboardButton('Донаты')
-    markup.row(btn4)
-    # состояние пользователя устанавливаем в START_STATE
-    bot.register_next_step_handler(message, on_click, state=START_STATE)
-    bot.send_message(message.chat.id, 'Пользователь зарегестрирован!', reply_markup=markup)
+def varif(message):
+    if message.text == '✅':
+        conn = sqlite3.connect('users.sql')
+        cur = conn.cursor()
+
+        cur.execute(f"INSERT INTO users (name, surname, group_user) VALUES ('%s', '%s', '%s')" % (name, surname, group_user))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        markup = types.ReplyKeyboardMarkup()
+        btn1 = types.KeyboardButton('Помощь по боту')
+        markup.row(btn1)
+        btn2 = types.KeyboardButton('Список мероприятий')
+        markup.row(btn2)
+        btn3 = types.KeyboardButton('Техническая поддержка')
+        markup.row(btn3)
+        btn4 = types.KeyboardButton('Донаты')
+        markup.row(btn4)
+        # состояние пользователя устанавливаем в START_STATE
+        bot.register_next_step_handler(message, on_click, state=START_STATE)
+        bot.send_message(message.chat.id, 'Пользователь зарегестрирован!', reply_markup=markup)
+    else:
+        bot.send_message(message.chat.id,'Пользователь не зарегистрирован, регистрация отменена')
+        main(message)
 
 
 def on_click(message, **kwargs):
@@ -144,6 +159,7 @@ def on_click(message, **kwargs):
         bot.register_next_step_handler(message, on_click, state=DONATE_STATE)
     else:
         bot.send_message(message.chat.id, 'Пожалуйста, выберите действие из предложенных кнопок.')
+
 
 def show_events(chat_id):
     markup = types.InlineKeyboardMarkup()
