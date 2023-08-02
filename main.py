@@ -8,8 +8,8 @@ name = None
 surname = None
 group_user = None
 
-event_name = None
-event_date = None
+new_event_name = None
+new_event_date = None
 
 # константы для идентификации состояний
 START_STATE =   1
@@ -38,7 +38,6 @@ def main(message):
     bot.register_next_step_handler(message, handle_registration)
 
 
-# ADMIN функция для добавления нового ивента 
 @bot.message_handler(commands=['add_event'])
 def add_event(message):
     # проверяем, является ли пользователь админом
@@ -46,37 +45,38 @@ def add_event(message):
         conn = sqlite3.connect('events.sql')
         cur = conn.cursor()
 
-        cur.execute('CREATE TABLE IF NOT EXISTS events (event_id int auto_increment primary key, event_name varchar(50), event_date varchar(20))')
+        cur.execute('CREATE TABLE IF NOT EXISTS events (event_id int auto_increment primary key, event_name varchar(50), event_date varchar(50))')
         conn.commit()
         cur.close()
         conn.close()
 
         bot.send_message(message.chat.id, 'Введите название мероприятия:')
-        bot.register_next_step_handler(message, event_name)
+        bot.register_next_step_handler(message, event_name_input)
     else:
         bot.send_message(message.chat.id, 'Вы не обладаете правами администратора')
 
 
-def event_name(message):
-    global event_name
-    event_name = message.text.strip()
-    bot.send_message(message.chat.id, f'Введите дату мероприятия:')
-    bot.register_next_step_handler(message, event_date)
+def event_name_input(message):
+    global new_event_name
+    new_event_name = message.text.strip()
+    bot.send_message(message.chat.id, 'Введите дату мероприятия:')
+    bot.register_next_step_handler(message, event_date_input)
 
 
-def event_date(message):
-    global event_date
-    event_name = message.text.strip()
+def event_date_input(message):
+    global new_event_date
+    new_event_date = message.text.strip()
     
     conn = sqlite3.connect('events.sql')
     cur = conn.cursor()
 
-    cur.execute(f"INSERT INTO events (event_name, event_date) VALUES ('%s', '%s')" % (event_name, event_date))
+    cur.execute(f"INSERT INTO events (event_name, event_date) VALUES ('%s', '%s')" % (new_event_name, new_event_date))
     conn.commit()
     cur.close()
     conn.close()
 
-    bot.send_message(message.chat.id, 'Мероприятие добавлено!')
+    bot.send_message(message.chat.id, 'Мероприятие добавлено!') 
+
 
 def handle_registration(message):
     if message.text == 'Регистрация':
@@ -162,28 +162,50 @@ def on_click(message, **kwargs):
 
 
 def show_events(chat_id):
+    # Получаем данные мероприятий из бд
+    events_data = get_events_data()
+
+    if not events_data:
+        bot.send_message(chat_id, 'Нет доступных мероприятий.')
+        return
+
     markup = types.InlineKeyboardMarkup()
-    # данные будут браться из бд
-    markup.add(types.InlineKeyboardButton('Мероприятие 1', callback_data='1'))
-    markup.add(types.InlineKeyboardButton('Мероприятие 2', callback_data='2'))
-    markup.add(types.InlineKeyboardButton('Мероприятие 3', callback_data='3'))
-    markup.add(types.InlineKeyboardButton('Выход', callback_data='exit'))
+    for event_name, event_date in events_data:
+        callback_data = f'{event_name}|{event_date}'
+        event_btn = types.InlineKeyboardButton(event_name, callback_data=callback_data)
+        markup.add(event_btn)
+
     bot.send_message(chat_id, 'Выберите мероприятие:', reply_markup=markup)
+
+
+def get_events_data():
+    conn = sqlite3.connect('events.sql')
+    cur = conn.cursor()
+
+    cur.execute('CREATE TABLE IF NOT EXISTS events (event_id INTEGER PRIMARY KEY AUTOINCREMENT, event_name VARCHAR(50), event_date VARCHAR(20))')
+    conn.commit()
+
+    cur.execute('SELECT event_name, event_date FROM events')
+    events_data = cur.fetchall()
+
+    conn.close()
+
+    return events_data
 
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_handler(call):
     # нужно продумать момент с тем, чтобы один пользователь только один раз мог записываться на мероприятие
-    if call.data.isdigit(): 
-        event_number = call.data
-        bot.answer_callback_query(call.id, f'Вы записались на мероприятие: {event_number}', show_alert=True)
+    if "|" in call.data:
+        event_name, event_date = call.data.split("|")
+        bot.answer_callback_query(call.id, f'Вы записались на мероприятие: {event_name}', show_alert=True)
         # получаем ID чата пользователя, чтобы отправить сообщение
         chat_id = call.message.chat.id
 
         # отправляем сообщение с информацией о мероприятии
-        bot.send_message(chat_id, f'Вы записались на мероприятие: {event_number}')
+        bot.send_message(chat_id, f'Вы записались на мероприятие: {event_name}\nДата: {event_date}')
 
-        # удаляем сообщение
+        # удаляем сообщения
         bot.delete_message(call.message.chat.id, call.message.message_id)
         bot.delete_message(call.message.chat.id, call.message.message_id - 1)
     else:
