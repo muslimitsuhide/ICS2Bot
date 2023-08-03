@@ -241,7 +241,6 @@ def callback_handler(call):
     order_number, count = add_user_event(call.from_user.id, call.data)
     event_name, event_date = call.data.split("|")
     
-    # нужно продумать момент с тем, чтобы один пользователь только один раз мог записываться на мероприятие
     if "|" in call.data and count == 0:
         bot.answer_callback_query(call.id, f'Вы записались на мероприятие: {event_name}', show_alert=True)
         # получаем ID чата пользователя, чтобы отправить сообщение
