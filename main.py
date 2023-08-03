@@ -170,7 +170,7 @@ def on_click(message, **kwargs):
 
 
 def show_events(chat_id):
-    # Получаем данные мероприятий из бд
+    # получаем данные мероприятий из бд
     events_data = get_events_data()
 
     if not events_data:
@@ -214,42 +214,49 @@ def add_user_event(user_id, event_id):
     conn = sqlite3.connect('user_events.sql')
     cur = conn.cursor()
 
-    # Проверяем, сколько уже пользователей записано на это мероприятие
+    cur.execute('SELECT COUNT(*) FROM user_events WHERE user_id = ? AND event_id = ?', (user_id, event_id))
+    result = cur.fetchone()
+    count = result[0] if result else 0
+
+    # проверяем, сколько уже пользователей записано на это мероприятие
     cur.execute('SELECT COUNT(*) FROM user_events WHERE event_id = ?', (event_id,))
     result = cur.fetchone()
-    if result:
+    if result and count == 0:
         order_number = result[0] + 1
     else:
         order_number = 1
 
-    # Добавляем запись о пользователе на мероприятие
+    # добавляем запись о пользователе на мероприятие
     cur.execute('INSERT INTO user_events (user_id, event_id, order_number) VALUES (?, ?, ?)', (user_id, event_id, order_number))
     conn.commit()
 
     cur.close()
     conn.close()
 
-    return order_number
+    return order_number, count
 
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_handler(call):
+    order_number, count = add_user_event(call.from_user.id, call.data)
+    event_name, event_date = call.data.split("|")
+    
     # нужно продумать момент с тем, чтобы один пользователь только один раз мог записываться на мероприятие
-    if "|" in call.data:
-        event_name, event_date = call.data.split("|")
+    if "|" in call.data and count == 0:
         bot.answer_callback_query(call.id, f'Вы записались на мероприятие: {event_name}', show_alert=True)
         # получаем ID чата пользователя, чтобы отправить сообщение
         chat_id = call.message.chat.id
 
-        order_number = add_user_event(call.from_user.id, call.data)
-
         # отправляем сообщение с информацией о мероприятии
-        bot.send_message(chat_id, f'Вы записались на мероприятие: {event_name}\nДата: {event_date}\nВаш номер в очереди: {order_number}')
+        bot.send_message(chat_id, f'Вы записались на {event_name}\nДата: {event_date}\nВаш номер в очереди: {order_number}')
 
         # удаляем сообщения
         bot.delete_message(call.message.chat.id, call.message.message_id)
         bot.delete_message(call.message.chat.id, call.message.message_id - 1)
     else:
+        chat_id = call.message.chat.id
+        bot.send_message(chat_id, f'Вы уже записаны на {event_name}!\nДата: {event_date}\nВаш номер в очереди: {order_number}')
+
         bot.delete_message(call.message.chat.id, call.message.message_id)
         bot.delete_message(call.message.chat.id, call.message.message_id - 1)
 
