@@ -29,10 +29,10 @@ def main(message):
     conn.close()
 
     markup = types.ReplyKeyboardMarkup()
-    btn1 = types.KeyboardButton('Регистрация')
-    markup.row(btn1)
-    btn2 = types.KeyboardButton('Выход')
-    markup.row(btn2)
+    reg_btn = types.KeyboardButton('Регистрация')
+    markup.row(reg_btn)
+    exit_btn = types.KeyboardButton('Выход')
+    markup.row(exit_btn)
     bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}\nЧтобы начать пользоваться ботом, нужно зарегистрироваться!', reply_markup=markup)
 
     bot.register_next_step_handler(message, handle_registration)
@@ -41,7 +41,7 @@ def main(message):
 @bot.message_handler(commands=['add_event'])
 def add_event(message):
     # проверяем, является ли пользователь админом
-    if message.from_user.id == admin_id:
+    if message.from_user.id == id:
         conn = sqlite3.connect('events.sql')
         cur = conn.cursor()
 
@@ -106,14 +106,14 @@ def user_group(message):
     global group_user
     group_user = message.text.strip()
 
-    bot.send_message(message.chat.id, f'Данные введены корректно?\nИмя: {name}\nФамилия: {surname}\nГруппа: {group_user}')
+    bot.send_message(message.chat.id, f'Имя: {name}\nФамилия: {surname}\nГруппа: {group_user}')
     new_markup = types.ReplyKeyboardMarkup()
-    btn1 = types.KeyboardButton('✅')
-    new_markup.row(btn1)
-    btn2 = types.KeyboardButton('❌')
-    new_markup.row(btn2)
+    true_btn = types.KeyboardButton('✅')
+    new_markup.row(true_btn)
+    false_btn = types.KeyboardButton('❌')
+    new_markup.row(false_btn)
     bot.register_next_step_handler(message, varif)
-    bot.send_message(message.chat.id, 'Нажмите кнопку:', reply_markup=new_markup)
+    bot.send_message(message.chat.id, 'Данные введены корректно?', reply_markup=new_markup)
 
 
 def varif(message):
@@ -127,14 +127,14 @@ def varif(message):
         conn.close()
 
         markup = types.ReplyKeyboardMarkup()
-        btn1 = types.KeyboardButton('Помощь по боту')
-        markup.row(btn1)
-        btn2 = types.KeyboardButton('Список мероприятий')
-        markup.row(btn2)
-        btn3 = types.KeyboardButton('Техническая поддержка')
-        markup.row(btn3)
-        btn4 = types.KeyboardButton('Донаты')
-        markup.row(btn4)
+        help_btn = types.KeyboardButton('Помощь по боту')
+        markup.row(help_btn)
+        list_btn = types.KeyboardButton('Список мероприятий')
+        markup.row(list_btn)
+        sup_btn = types.KeyboardButton('Техническая поддержка')
+        markup.row(sup_btn)
+        donate_btn = types.KeyboardButton('Донаты')
+        markup.row(donate_btn)
         # состояние пользователя устанавливаем в START_STATE
         bot.register_next_step_handler(message, on_click, state=START_STATE)
         bot.send_message(message.chat.id, 'Пользователь зарегестрирован!', reply_markup=markup)
