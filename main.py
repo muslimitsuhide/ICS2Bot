@@ -252,18 +252,35 @@ def add_user_event(user_id, event_id):
     return order_number, count
 
 
+def get_numbers(num):
+    if num < 1:
+        raise ValueError("Number error, check DB")
+
+    que_nums = []
+
+    for _ in range(4):
+        if num <= 100:
+            que_nums.append(num)
+        else:
+            que_nums.append(num - 100)
+        num += 25
+
+    return ', '.join(map(str, que_nums))
+
+
 @bot.callback_query_handler(func=lambda call: True)
 def callback_handler(call):
     order_number, count = add_user_event(call.from_user.id, call.data)
     event_name, event_date = call.data.split("|")
+    true_num = get_numbers(order_number)
     
     if "|" in call.data and count == 0:
-        bot.answer_callback_query(call.id, f'Вы записались на мероприятие: {event_name}', show_alert=True)
+        bot.answer_callback_query(call.id, f'Вы записались на {event_name}\nДата: {event_date}', show_alert=True)
         # получаем ID чата пользователя, чтобы отправить сообщение
         chat_id = call.message.chat.id
 
         # отправляем сообщение с информацией о мероприятии
-        bot.send_message(chat_id, f'Вы записались на {event_name}\nДата: {event_date}\nВаш номер в очереди: {order_number}')
+        bot.send_message(chat_id, f'Вы записались на {event_name}\nДата: {event_date}\nВаш номер в очереди: {order_number}\nНомера вопросов в вашем билете: {true_num}')
 
         # удаляем сообщения
         bot.delete_message(call.message.chat.id, call.message.message_id)
