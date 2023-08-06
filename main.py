@@ -33,7 +33,7 @@ def main(message):
     markup.row(reg_btn)
     exit_btn = types.KeyboardButton('Выход')
     markup.row(exit_btn)
-    bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}\nЧтобы начать пользоваться ботом, нужно зарегистрироваться!', reply_markup=markup)
+    bot.send_message(message.chat.id, f'👋 Привет, {message.from_user.first_name}\nЧтобы начать пользоваться ботом, нужно зарегистрироваться!', reply_markup=markup)
 
     bot.register_next_step_handler(message, handle_registration)
 
@@ -69,7 +69,7 @@ def add_event(message):
         bot.send_message(message.chat.id, 'Введите название мероприятия:')
         bot.register_next_step_handler(message, event_name_input)
     else:
-        bot.send_message(message.chat.id, 'Вы не обладаете правами администратора')
+        bot.send_message(message.chat.id, '❌ Вы не обладаете правами администратора')
 
 
 def event_name_input(message):
@@ -91,7 +91,7 @@ def event_date_input(message):
     cur.close()
     conn.close()
 
-    bot.send_message(message.chat.id, 'Мероприятие добавлено!') 
+    bot.send_message(message.chat.id, '✅ Мероприятие добавлено!') 
 
 
 def handle_registration(message):
@@ -99,9 +99,9 @@ def handle_registration(message):
         bot.send_message(message.chat.id, 'Введите свое настоящее имя:')
         bot.register_next_step_handler(message, user_name)
     elif message.text == 'Выход':
-        bot.send_message(message.chat.id, 'Вы отменили регистрацию.', reply_markup=types.ReplyKeyboardRemove())
+        bot.send_message(message.chat.id, '🔘 Вы отменили регистрацию.', reply_markup=types.ReplyKeyboardRemove())
     else:
-        bot.send_message(message.chat.id, 'Пожалуйста, выберите действие из предложенных кнопок.')
+        bot.send_message(message.chat.id, '❌ Пожалуйста, выберите действие из предложенных кнопок.')
 
 
 def user_name(message): 
@@ -143,25 +143,25 @@ def varif(message):
         conn.close()
 
         markup = types.ReplyKeyboardMarkup()
-        help_btn = types.KeyboardButton('Помощь по боту')
+        help_btn = types.KeyboardButton('🤖 Помощь по боту')
         markup.row(help_btn)
-        list_btn = types.KeyboardButton('Список мероприятий')
+        list_btn = types.KeyboardButton('📄 Список мероприятий')
         markup.row(list_btn)
-        sup_btn = types.KeyboardButton('Техническая поддержка')
+        sup_btn = types.KeyboardButton('🫂 Техническая поддержка')
         markup.row(sup_btn)
-        donate_btn = types.KeyboardButton('Донаты')
+        donate_btn = types.KeyboardButton('💸 Донаты')
         markup.row(donate_btn)
         # состояние пользователя устанавливаем в START_STATE
         bot.register_next_step_handler(message, on_click, state=START_STATE)
-        bot.send_message(message.chat.id, 'Пользователь зарегестрирован!', reply_markup=markup)
+        bot.send_message(message.chat.id, '✅ Пользователь зарегистрирован!', reply_markup=markup)
     else:
-        bot.send_message(message.chat.id,'Пользователь не зарегистрирован, регистрация отменена')
+        bot.send_message(message.chat.id,'❌ Пользователь не зарегистрирован, регистрация отменена')
         main(message)
 
 
 def on_click(message, **kwargs):
     state = kwargs.get('state')
-    if message.text == 'Помощь по боту':
+    if message.text == '🤖 Помощь по боту':
         bot.send_message(message.chat.id, '🤖 ICS2 Bot дает возможность студентам записываться на любые учебные мероприятия заранее, дабы избежать неприятных ситуаций, которые, к сожалению, нередко возникают.\n\n'
                         '⭐️ Удобства:\n\n- Интуитивно понятный интерфейс;\n- Экономия времени и нервов;\n- Возможность заранее узнать, какие вопросы попадутся именно тебе на РК;\n'
                         '- Возможность узнавать о всех мероприятиях заблаговременно, чтобы успеть распланировать свой день.\n\n'
@@ -169,15 +169,15 @@ def on_click(message, **kwargs):
                         '🚀 Я также буду постепенно выносить часто задаваемые вопросы и проблемы в /faq.')
         bot.register_next_step_handler(message, on_click, state=HELP_STATE)
 
-    elif message.text == 'Список мероприятий':
+    elif message.text == '📄 Список мероприятий':
         show_events(message.chat.id)
         bot.register_next_step_handler(message, on_click, state=EVENTS_STATE)
 
-    elif message.text == 'Техническая поддержка':
+    elif message.text == '🫂 Техническая поддержка':
         bot.send_message(message.chat.id, '💬 Для всех пользователей поддержка осуществляется через личные сообщения @muslimitsuhide.')
         bot.register_next_step_handler(message, on_click, state=SUPPORT_STATE)
 
-    elif message.text == 'Донаты':
+    elif message.text == '💸 Донаты':
         bot.send_message(message.chat.id, '💬 Донатов не будет, мне стало впадлу.')
         bot.register_next_step_handler(message, on_click, state=DONATE_STATE)
 
@@ -275,19 +275,20 @@ def callback_handler(call):
     true_num = get_numbers(order_number)
     
     if "|" in call.data and count == 0:
-        bot.answer_callback_query(call.id, f'Вы записались на {event_name}\nДата: {event_date}', show_alert=True)
+        bot.answer_callback_query(call.id, f'✅ Вы записались на {event_name}\nДата: {event_date}', show_alert=True)
         # получаем ID чата пользователя, чтобы отправить сообщение
         chat_id = call.message.chat.id
 
         # отправляем сообщение с информацией о мероприятии
-        bot.send_message(chat_id, f'Вы записались на {event_name}\nДата: {event_date}\nВаш номер в очереди: {order_number}\nНомера вопросов в вашем билете: {true_num}')
+        bot.send_message(chat_id, f'🆗 Вы записались на {event_name}\n----------------------------\nДата: {event_date}\nВаш номер в очереди: {order_number}\nНомера вопросов в вашем билете: {true_num}\n'
+                         '----------------------------')
 
         # удаляем сообщения
         bot.delete_message(call.message.chat.id, call.message.message_id)
         bot.delete_message(call.message.chat.id, call.message.message_id - 1)
     else:
         chat_id = call.message.chat.id
-        bot.send_message(chat_id, f'Вы уже записаны на {event_name}!\nДата: {event_date}\nВаш номер в очереди: {order_number}')
+        bot.send_message(chat_id, f'❌ Вы уже записаны на {event_name}!\n----------------------------\nДата: {event_date}\nВаш номер в очереди: {order_number}')
 
         bot.delete_message(call.message.chat.id, call.message.message_id)
         bot.delete_message(call.message.chat.id, call.message.message_id - 1)
