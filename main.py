@@ -57,7 +57,7 @@ def faq(message):
 @bot.message_handler(commands=['add_event'])
 def add_event(message):
     # проверяем, является ли пользователь админом
-    if message.from_user.id == id:
+    if message.from_user.id == 523934931:
         conn = sqlite3.connect('events.sql')
         cur = conn.cursor()
 
@@ -70,39 +70,6 @@ def add_event(message):
         bot.register_next_step_handler(message, event_name_input)
     else:
         bot.send_message(message.chat.id, '❌ Вы не обладаете правами администратора')
-
-
-@bot.message_handler(commands=['send_message'])
-def send_message(message):
-    # проверяем, является ли пользователь админом
-    if message.from_user.id == id:
-        bot.reply_to(message, "Введите сообщение, которое хотите отправить всем пользователям:")
-        bot.register_next_step_handler(message, process_message)
-    else:
-        bot.reply_to(message, '❌ Вы не обладаете правами администратора')
-
-
-# обработчик для ввода сообщения
-def process_message(message):
-    message_text = message.text
-    send_message_to_all_users(message_text)
-    bot.reply_to(message, f"✅ Сообщение успешно отправлено всем пользователям.")
-
-
-# функция для отправки сообщения всем пользователям
-def send_message_to_all_users(message_text):
-    conn = sqlite3.connect('tg_id.sql')
-    cur = conn.cursor()
-
-    cur.execute('SELECT DISTINCT user_id FROM tg_id')
-    user_ids = cur.fetchall()
-
-    for user_id in user_ids:
-        user_id = user_id[0]
-        bot.send_message(user_id, f'📩 Вы получили новое сообщение!\n\n {message_text}')
-
-    cur.close()
-    conn.close()
 
 
 def event_name_input(message):
@@ -124,7 +91,43 @@ def event_date_input(message):
     cur.close()
     conn.close()
 
-    bot.send_message(message.chat.id, '✅ Мероприятие добавлено!') 
+    bot.send_message(message.chat.id, f'✅ Мероприятие "{new_event_name}" добавлено!') 
+    
+    for _ in range (5):
+        bot.delete_message(message.chat.id, message.message_id - _)
+
+
+@bot.message_handler(commands=['send_message'])
+def send_message(message):
+    if message.from_user.id == 523934931:
+        bot.send_message(message.chat.id, 'Введите сообщение, которое хотите отправить всем пользователям:')
+        bot.register_next_step_handler(message, process_message)
+    else:
+        bot.send_message(message.chat.id, '❌ Вы не обладаете правами администратора')
+
+
+# обработчик для ввода сообщения
+def process_message(message):
+    message_text = message.text
+    send_message_to_all_users(message_text)
+    bot.send_message(message.chat.id, f'✅ Сообщение "{message_text}" успешно отправлено всем пользователям.')
+
+
+# функция для отправки сообщения всем пользователям
+def send_message_to_all_users(message_text):
+    conn = sqlite3.connect('tg_id.sql')
+    cur = conn.cursor()
+
+    cur.execute('SELECT DISTINCT user_id FROM tg_id')
+    user_ids = cur.fetchall()
+
+    for user_id in user_ids:
+        user_id = user_id[0]
+        bot.send_message(user_id, f'📩 Вы получили новое сообщение!\n----------------------------\n'
+                         f'{message_text}\n----------------------------')
+
+    cur.close()
+    conn.close()
 
 
 def handle_registration(message):
