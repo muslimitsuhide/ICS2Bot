@@ -1,6 +1,7 @@
 import telebot
 from telebot import types
 import sqlite3
+import os
 
 bot = telebot.TeleBot('token')
 
@@ -128,6 +129,30 @@ def send_message_to_all_users(message_text):
 
     cur.close()
     conn.close()
+
+
+@bot.message_handler(commands=['drop_db'])
+def drop_db(message):
+    if message.from_user.id == 523934931:
+        bot.send_message(message.chat.id, 'Введите название БД, которую нужно дропнуть:\n'
+                         '----------------------------\nusers.sql\n'
+                         'events.sql\ntg_id.sql\nuser_events.sql\n'
+                         '----------------------------')
+        bot.register_next_step_handler(message, delete_db)
+    else:
+        bot.send_message(message.chat.id, '❌ Вы не обладаете правами администратора')
+
+
+def delete_db(message):
+    db_name = message.text
+    
+    file_path = db_name
+    
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        bot.reply_to(message, f"✅ База данных {db_name} успешно удалена.")
+    else:
+        bot.reply_to(message, f"❌ База данных {db_name} не найдена.")
 
 
 def handle_registration(message):
