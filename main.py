@@ -12,13 +12,14 @@ group_user = None
 new_event_name = None
 new_event_date = None
 
-# константы для идентификации состояний
+# константы для идентификации состояний (не используются в текущей реализации функционала)
 START_STATE =   1
 HELP_STATE =    2
 EVENTS_STATE =  3
 SUPPORT_STATE = 4
 DONATE_STATE =  5
 
+# обработка комманды /start
 @bot.message_handler(commands=['start'])
 def main(message):
     conn = sqlite3.connect('users.sql')
@@ -39,6 +40,7 @@ def main(message):
     bot.register_next_step_handler(message, handle_registration)
 
 
+# обработка комманды /help
 @bot.message_handler(commands=['help'])
 def help(message):
     bot.send_message(message.chat.id, '🤖 ICS2 Bot дает возможность студентам записываться на любые учебные мероприятия заранее, дабы избежать неприятных ситуаций, которые, к сожалению, нередко возникают.\n\n'
@@ -48,6 +50,7 @@ def help(message):
                     '🚀 Я также буду постепенно выносить часто задаваемые вопросы и проблемы в /faq.')
     
 
+# обработка комманды /faq
 @bot.message_handler(commands=['faq'])
 def faq(message):
     bot.send_message(message.chat.id, '<b>1. У меня ничего не происходит при отправке текста боту, что делать?</b>\n\n'
@@ -55,6 +58,7 @@ def faq(message):
                     'Если проблема все еще осталась, обратитесь разработчику @muslimitsuhide.', parse_mode='HTML')
 
 
+# обработка комманды /add_event
 @bot.message_handler(commands=['add_event'])
 def add_event(message):
     # проверяем, является ли пользователь админом
@@ -98,6 +102,7 @@ def event_date_input(message):
         bot.delete_message(message.chat.id, message.message_id - _)
 
 
+# обработка комманды /send_message
 @bot.message_handler(commands=['send_message'])
 def send_message(message):
     if message.from_user.id == 523934931:
@@ -131,6 +136,7 @@ def send_message_to_all_users(message_text):
     conn.close()
 
 
+# обработка комманды /drop_db
 @bot.message_handler(commands=['drop_db'])
 def drop_db(message):
     if message.from_user.id == 523934931:
@@ -324,6 +330,7 @@ def add_user_event(user_id, event_id):
     return order_number, count
 
 
+# функция для вычисления номеров вопросов в N-ом билете
 def get_numbers(num):
     if num < 1:
         raise ValueError("Number error, check DB")
