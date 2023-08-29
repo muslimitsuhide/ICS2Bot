@@ -2,6 +2,7 @@ import telebot
 from telebot import types
 import sqlite3
 import os
+import re
 
 bot = telebot.TeleBot('token')
 
@@ -185,29 +186,49 @@ def handle_registration(message):
 def user_name(message): 
     global name
     name = message.text.strip()
-    bot.send_message(message.chat.id, f'Введите свою настоящую фамилию:')
-    bot.register_next_step_handler(message, user_surname)
+
+    if is_valid_input(name):
+        bot.send_message(message.chat.id, f'Введите свою настоящую фамилию:')
+        bot.register_next_step_handler(message, user_surname)
+    else:
+        bot.send_message(message.chat.id, '❌ Имя должно состоять только из букв русского алфавита!\nПопробуйте снова:')
+        bot.register_next_step_handler(message, user_name)
 
 
 def user_surname(message): 
     global surname
     surname = message.text.strip()
-    bot.send_message(message.chat.id, f'Введите свою группу:')
-    bot.register_next_step_handler(message, user_group)
+
+    if is_valid_input(surname):
+        bot.send_message(message.chat.id, f'Введите свою группу:')
+        bot.register_next_step_handler(message, user_group)
+    else:
+        bot.send_message(message.chat.id, '❌ Фамилия должна состоять только из букв русского алфавита!\nПопробуйте снова:')
+        bot.register_next_step_handler(message, user_surname)
 
 
 def user_group(message): 
     global group_user
     group_user = message.text.strip()
 
-    bot.send_message(message.chat.id, f'Имя: {name}\nФамилия: {surname}\nГруппа: {group_user}')
-    new_markup = types.ReplyKeyboardMarkup()
-    true_btn = types.KeyboardButton('✅')
-    new_markup.row(true_btn)
-    false_btn = types.KeyboardButton('❌')
-    new_markup.row(false_btn)
-    bot.register_next_step_handler(message, varif)
-    bot.send_message(message.chat.id, 'Данные введены корректно?', reply_markup=new_markup)
+    if is_valid_input(group_user):
+        bot.send_message(message.chat.id, f'Имя: {name}\nФамилия: {surname}\nГруппа: {group_user}')
+        new_markup = types.ReplyKeyboardMarkup()
+        true_btn = types.KeyboardButton('✅')
+        new_markup.row(true_btn)
+        false_btn = types.KeyboardButton('❌')
+        new_markup.row(false_btn)
+        bot.register_next_step_handler(message, varif)
+        bot.send_message(message.chat.id, 'Данные введены корректно?', reply_markup=new_markup)
+    else:
+        bot.send_message(message.chat.id, '❌ Группа должна состоять только из букв русского алфавита и цифр!\nПопробуйте снова:')
+        bot.register_next_step_handler(message, user_group)
+
+
+# выражение для проверки валидности данных
+def is_valid_input(input_text):
+    valid_pattern = re.compile(r'^[А-Яа-я0-9\-]+$')
+    return bool(valid_pattern.match(input_text))
 
 
 def varif(message):
