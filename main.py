@@ -277,7 +277,8 @@ def on_click(message, **kwargs):
         bot.register_next_step_handler(message, on_click, state=SUPPORT_STATE)
 
     elif message.text == '💸 Донаты':
-        bot.send_message(message.chat.id, '💬 Донатов не будет, мне стало впадлу.')
+        bot.send_chat_action(message.chat.id, 'typing')  
+        bot.send_message(message.chat.id, '💸 Перейдите по этой [ссылке](https://yoomoney.ru/fundraise/Mbw9UQLEi9c.230829), чтобы сделать донат.', parse_mode='Markdown')
         bot.register_next_step_handler(message, on_click, state=DONATE_STATE)
 
     else:
