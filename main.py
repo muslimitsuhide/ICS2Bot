@@ -389,7 +389,8 @@ def callback_handler(call):
         bot.delete_message(call.message.chat.id, call.message.message_id - 1)
     else:
         chat_id = call.message.chat.id
-        bot.send_message(chat_id, f'❌ Вы уже записаны на {event_name}!\n----------------------------\nДата: {event_date}\nВаш номер в очереди: {order_number}\nНомера вопросов в вашем билете: {true_num}\n')
+        bot.send_message(chat_id, f'❌ Вы уже записаны на {event_name}!\n----------------------------\nДата: {event_date}\nВаш номер в очереди: {order_number}\nНомера вопросов в вашем билете: {true_num}\n'
+                         '----------------------------')
 
         bot.delete_message(call.message.chat.id, call.message.message_id)
         bot.delete_message(call.message.chat.id, call.message.message_id - 1)
