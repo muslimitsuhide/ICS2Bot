@@ -277,7 +277,6 @@ def on_click(message, **kwargs):
         bot.register_next_step_handler(message, on_click, state=SUPPORT_STATE)
 
     elif message.text == '💸 Донаты':
-        bot.send_chat_action(message.chat.id, 'typing')  
         bot.send_message(message.chat.id, '💸 Перейдите по этой [ссылке](https://yoomoney.ru/fundraise/Mbw9UQLEi9c.230829), чтобы сделать донат.', parse_mode='Markdown')
         bot.register_next_step_handler(message, on_click, state=DONATE_STATE)
 
@@ -384,6 +383,19 @@ def callback_handler(call):
         bot.send_message(chat_id, f'🆗 Вы записались на {event_name}\n----------------------------\nДата: {event_date}\nВаш номер в очереди: {order_number}\nНомера вопросов в вашем билете: {true_num}\n'
                          '----------------------------')
 
+        file_name = event_name + '.txt'
+
+        if os.path.exists(file_name):
+            # файл существует, дописываем новую запись
+            with open(file_name, 'a') as file:
+                content_to_write = str(order_number) + ') ' + name + ' ' + surname + ' ' + group_user + ' ' + event_name + ' ' + event_date
+                file.write(content_to_write) 
+        else:
+            # файла нет, создаем, записываем
+            with open(file_name, 'w') as file:
+                content_to_write = str(order_number) + ') ' + name + ' ' + surname + ' ' + group_user + ' ' + event_name + ' ' + event_date
+                file.write(content_to_write)
+        
         # удаляем сообщения
         bot.delete_message(call.message.chat.id, call.message.message_id)
         bot.delete_message(call.message.chat.id, call.message.message_id - 1)
